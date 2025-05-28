@@ -158,17 +158,7 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
             <Menu.Item
               key={product.ean}
               onPress={() => handleProductSelect(product)}
-              title={
-                <View style={styles.menuItemContent}>
-                  <Text style={styles.productDescription}>
-                    {truncateDescription(product.description, 35)}
-                  </Text>
-                  <View style={styles.productInfo}>
-                    <Text style={styles.productEan}>EAN: {product.ean}</Text>
-                    <Text style={styles.productPrice}>{formatPrice(product.price)}</Text>
-                  </View>
-                </View>
-              }
+              title={`${truncateDescription(product.description, 35)} - ${formatPrice(product.price)}`}
               titleStyle={styles.exampleText}
             />
           ))}
@@ -181,17 +171,7 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
           <Menu.Item
             key={product.ean}
             onPress={() => handleProductSelect(product)}
-            title={
-              <View style={styles.menuItemContent}>
-                <Text style={styles.productDescription}>
-                  {truncateDescription(product.description, 35)}
-                </Text>
-                <View style={styles.productInfo}>
-                  <Text style={styles.productEan}>EAN: {product.ean}</Text>
-                  <Text style={styles.productPrice}>{formatPrice(product.price)}</Text>
-                </View>
-              </View>
-            }
+            title={`${truncateDescription(product.description, 35)} - ${formatPrice(product.price)}`}
           />
         ));
       } else {
@@ -231,7 +211,7 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
             onBlur={handleBlur}
           />
         }
-        contentStyle={styles.menuContent}
+        contentStyle={[styles.menuContent, { backgroundColor: theme.colors.surface }]}
       >
         {renderMenuContent()}
       </Menu>
