@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { TextInput, Chip, Menu, useTheme, Text } from 'react-native-paper';
+import { TextInput, Chip, Menu, useTheme, Text, Avatar } from 'react-native-paper';
 import { Product } from '../data/products';
 
 interface SearchWithChipsProps {
@@ -132,13 +132,17 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
           key={product.ean}
           onClose={() => handleChipRemove(product.ean)}
           style={styles.chip}
+          textStyle={styles.chipText}
+          avatar={
+            <Avatar.Icon 
+              size={24} 
+              icon="package-variant" 
+              style={styles.chipIcon}
+              color="white"
+            />
+          }
         >
-          <Text style={styles.chipText}>
-            {truncateDescription(product.description, 25)}
-          </Text>
-          <Text style={styles.chipEan}>
-            {' '}({product.ean})
-          </Text>
+          {truncateDescription(product.description, 25)}
         </Chip>
       ))}
     </View>
@@ -232,14 +236,17 @@ const styles = StyleSheet.create({
   chip: {
     marginRight: 4,
     marginBottom: 4,
+    backgroundColor: '#E0E0E0',
   },
   chipText: {
     fontSize: 12,
     fontWeight: '500',
+    color: 'black',
   },
-  chipEan: {
-    fontSize: 10,
-    opacity: 0.7,
+  chipIcon: {
+    backgroundColor: 'darkgrey',
+    marginRight: 0,
+    marginLeft: -6,
   },
   menuContent: {
     marginTop: 8,
