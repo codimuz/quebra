@@ -216,29 +216,25 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
   return (
     <View style={styles.container}>
       {renderChips()}
-      <View>
-        <TextInput
-          ref={inputRef}
-          mode="outlined"
-          label={label}
-          placeholder={placeholder}
-          value={searchText}
-          onChangeText={handleTextChange}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-        />
-        
-        <Menu
-          visible={showDropdown}
-          onDismiss={() => setShowDropdown(false)}
-          anchor={
-            <View style={styles.anchorView} />
-          }
-          contentStyle={styles.menuContent}
-        >
-          {renderMenuContent()}
-        </Menu>
-      </View>
+      <Menu
+        visible={showDropdown}
+        onDismiss={() => setShowDropdown(false)}
+        anchor={
+          <TextInput
+            ref={inputRef}
+            mode="outlined"
+            label={label}
+            placeholder={placeholder}
+            value={searchText}
+            onChangeText={handleTextChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+          />
+        }
+        contentStyle={styles.menuContent}
+      >
+        {renderMenuContent()}
+      </Menu>
     </View>
   );
 };
@@ -264,13 +260,6 @@ const styles = StyleSheet.create({
   chipEan: {
     fontSize: 10,
     opacity: 0.7,
-  },
-  anchorView: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 56,
   },
   menuContent: {
     marginTop: 8,
