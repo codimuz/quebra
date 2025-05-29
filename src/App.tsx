@@ -1,139 +1,37 @@
-import React, { useMemo, useRef, useState, useCallback } from 'react';
-import { ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
+
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   Appbar,
-  Button,
-  Divider,
-  Headline,
   MD3DarkTheme,
   MD3LightTheme,
   PaperProvider,
-  Paragraph,
-  TextInput,
   ThemeProvider,
-  TouchableRipple,
-  Portal,
   FAB,
+  Portal,
 } from 'react-native-paper';
-import {
-  Dropdown,
-  MultiSelectDropdown,
-  DropdownInputProps,
-  DropdownItemProps,
-  DropdownRef,
-} from 'react-native-paper-dropdown';
-import SearchWithChips from './components/SearchWithChips';
-import SingleChipSearch from './components/SingleChipSearch';
-import FocusAwareChipContainer from './components/FocusAwareChipContainer';
-import { PRODUCTS } from './data/products';
+import { Dropdown } from 'react-native-paper-dropdown';
 
-const OPTIONS = [
-  { label: 'Male', value: 'male' },
-  { label: 'Female', value: 'female' },
-  { label: 'Other', value: 'other' },
+const MOTIVOS = [
+  { label: '01 – Produto vencido', value: '01' },
+  { label: '02 – Produto danificado / impróprio para consumo', value: '02' },
+  { label: '03 – Degustação (depósito)', value: '03' },
+  { label: '04 – Degustação (loja)', value: '04' },
+  { label: '05 – Furto interno', value: '05' },
+  { label: '06 – Furto na área de vendas', value: '06' },
+  { label: '07 – Alimento preparado para o refeitório', value: '07' },
+  { label: '08 – Furto não recuperado', value: '08' },
+  { label: '09 – Trocas ou devoluções', value: '09' },
+  { label: '10 – Ajuste de inventário', value: '10' },
 ];
-
-const MULTI_SELECT_OPTIONS = [
-  {
-    label: 'White',
-    value: 'white',
-  },
-  {
-    label: 'Red',
-    value: 'red',
-  },
-  {
-    label: 'Blue',
-    value: 'blue',
-  },
-  {
-    label: 'Green',
-    value: 'green',
-  },
-  {
-    label: 'Orange',
-    value: 'orange',
-  },
-];
-
-const CustomDropdownItem = ({
-  width,
-  option,
-  value,
-  onSelect,
-  toggleMenu,
-  isLast,
-}: DropdownItemProps) => {
-  const style: ViewStyle = useMemo(
-    () => ({
-      height: 50,
-      width,
-      backgroundColor:
-        value === option.value
-          ? MD3DarkTheme.colors.primary
-          : MD3DarkTheme.colors.onPrimary,
-      justifyContent: 'center',
-      paddingHorizontal: 16,
-    }),
-    [option.value, value, width]
-  );
-
-  return (
-    <>
-      <TouchableRipple
-        onPress={() => {
-          onSelect?.(option.value);
-          toggleMenu();
-        }}
-        style={style}
-      >
-        <Headline
-          style={{
-            color:
-              value === option.value
-                ? MD3DarkTheme.colors.onPrimary
-                : MD3DarkTheme.colors.primary,
-          }}
-        >
-          {option.label}
-        </Headline>
-      </TouchableRipple>
-      {!isLast && <Divider />}
-    </>
-  );
-};
-
-const CustomDropdownInput = ({
-  placeholder,
-  selectedLabel,
-  rightIcon,
-}: DropdownInputProps) => {
-  return (
-    <TextInput
-      mode="outlined"
-      placeholder={placeholder}
-      placeholderTextColor={MD3DarkTheme.colors.onSecondary}
-      value={selectedLabel}
-      style={{
-        backgroundColor: MD3DarkTheme.colors.primary,
-      }}
-      textColor={MD3DarkTheme.colors.onPrimary}
-      right={rightIcon}
-    />
-  );
-};
 
 export default function App() {
   const [nightMode, setNightmode] = useState(false);
-  const [gender, setGender] = useState<string>();
-  const [colors, setColors] = useState<string[]>([]);
-  const [fabState, setFabState] = useState({ open: false });
-  const [selectedProduct1, setSelectedProduct1] = useState<any>(null);
-  const [selectedProduct2, setSelectedProduct2] = useState<any>(null);
-  const refDropdown1 = useRef<DropdownRef>(null);
+  const [motivo, setMotivo] = useState<string>();
+  const [fabOpen, setFabOpen] = useState(false);
   const Theme = nightMode ? MD3DarkTheme : MD3LightTheme;
 
-  const onFabStateChange = ({ open }: { open: boolean }) => setFabState({ open });
+  const onFabStateChange = ({ open }: { open: boolean }) => setFabOpen(open);
 
   return (
     <ThemeProvider theme={Theme}>
@@ -145,112 +43,45 @@ export default function App() {
           ]}
         >
           <Appbar.Header elevated>
-            <Appbar.Content title={'Single Chip Search Demo'} />
+            <Appbar.Content title={'Seleção de Motivos'} />
             <Appbar.Action
               icon={nightMode ? 'brightness-7' : 'brightness-3'}
               onPress={() => setNightmode(!nightMode)}
             />
           </Appbar.Header>
-          <ScrollView
-            showsVerticalScrollIndicator
-            keyboardShouldPersistTaps={'handled'}
-          >
+          <ScrollView keyboardShouldPersistTaps={'handled'}>
             <View style={styles.formWrapper}>
               <Dropdown
                 label={'Motivos'}
                 placeholder="Selecionar motivo"
-                options={OPTIONS}
-                value={gender}
-                onSelect={setGender}
+                options={MOTIVOS}
+                value={motivo}
+                onSelect={setMotivo}
                 mode="outlined"
               />
-              <View style={styles.spacer} />
-              <SearchWithChips
-                products={PRODUCTS}
-                onSelectionChange={(product) => {
-                  setSelectedProduct1(product);
-                  console.log('\n=== SearchWithChips (Refatorado) ===');
-                  if (product) {
-                    console.log(`Produto: ${product.description} (EAN: ${product.ean}) - ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}`);
-                  } else {
-                    console.log('Nenhum produto selecionado');
-                  }
-                  console.log('===============================\n');
-                }}
-                label="SearchWithChips (Refatorado)"
-                placeholder="Digite EAN ou descrição do produto..."
-              />
-              <View style={styles.spacer} />
-              
-              <SingleChipSearch
-                products={PRODUCTS}
-                selectedProduct={selectedProduct2}
-                onSelectionChange={(product) => {
-                  setSelectedProduct2(product);
-                  console.log('\n=== SingleChipSearch (Novo) ===');
-                  if (product) {
-                    console.log(`Produto: ${product.description} (EAN: ${product.ean}) - ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}`);
-                  } else {
-                    console.log('Nenhum produto selecionado');
-                  }
-                  console.log('============================\n');
-                }}
-                label="SingleChipSearch (Novo)"
-                placeholder="Digite EAN ou descrição do produto..."
-              />
-              <View style={styles.spacer} />
-
-              <TextInput
-                mode="outlined"
-                label="Peso/UN"
-                placeholder="Digite o peso"
-                right={<TextInput.Affix text="/100" />}
-              />
-              <View style={styles.spacer} />
-
-              <View style={styles.spacer} />
-              <View style={styles.spacer} />
-              <Button
-                mode={'contained'}
-                onPress={() => {
-                  setGender(undefined);
-                  setSelectedProduct1(null);
-                  setSelectedProduct2(null);
-                }}
-              >
-                Limpar Todos
-              </Button>
-              <View style={styles.spacer} />
-              <View style={styles.spacer} />
             </View>
           </ScrollView>
           <Portal>
             <FAB.Group
-              open={fabState.open}
+              open={fabOpen}
               visible
-              icon={fabState.open ? 'calendar-today' : 'plus'}
+              icon={fabOpen ? 'calendar-today' : 'plus'}
               actions={[
-                { icon: 'plus', onPress: () => console.log('Pressed add') },
                 {
-                  icon: 'star',
-                  label: 'Star',
-                  onPress: () => console.log('Pressed star'),
+                  icon: 'import',
+                  label: 'Importar',
+                  onPress: () => console.log('Pressed import')
                 },
                 {
-                  icon: 'email',
-                  label: 'Email',
-                  onPress: () => console.log('Pressed email'),
-                },
-                {
-                  icon: 'bell',
-                  label: 'Remind',
-                  onPress: () => console.log('Pressed notifications'),
+                  icon: 'export',
+                  label: 'Exportar',
+                  onPress: () => console.log('Pressed export'),
                 },
               ]}
               onStateChange={onFabStateChange}
               onPress={() => {
-                if (fabState.open) {
-                  // Ação quando o FAB estiver aberto
+                if (fabOpen) {
+                  // do something if the speed dial is open
                 }
               }}
             />
