@@ -1,37 +1,26 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Keyboard, Platform } from 'react-native';
-import { TextInput, Text, useTheme } from 'react-native-paper';
+import React, { useCallback, useRef, useState } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { TextInput, TextInputProps } from 'react-native-paper';
 import { Product } from '../data/products';
 import { SearchResult } from '../utils/fuzzySearch';
 import { useAdvancedSearch } from '../hooks/useAdvancedSearch';
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
-import { useChipPersistentState } from '../hooks/useChipPersistentState';
+import { useFocusAwareState } from '../hooks/useFocusAwareState';
 import SearchDropdown from './SearchDropdown';
-import ProductChip from './ProductChip';
+import SimpleProductChip from './SimpleProductChip';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
-import { ChipState } from '../types/chipStates';
-import { combineStateStyles } from '../styles/chipThemes';
 
-export interface SearchWithChipsProps {
+export interface FocusAwareChipContainerProps extends Omit<TextInputProps, 'value' | 'onChangeText' | 'onFocus' | 'onBlur' | 'onSelectionChange'> {
   products: Product[];
   onSelectionChange: (product: Product | null) => void;
-  label?: string;
-  placeholder?: string;
   maxResults?: number;
   debounceMs?: number;
   fuzzyThreshold?: number;
-  disabled?: boolean;
-  error?: string;
-  loading?: boolean;
-  autoFocus?: boolean;
   allowClear?: boolean;
-  // Acessibilidade
-  ariaLabel?: string;
-  ariaDescribedBy?: string;
-  testID?: string;
+  autoFocus?: boolean;
 }
 
-const SearchWithChips: React.FC<SearchWithChipsProps> = ({
+const FocusAwareChipContainer: React.FC<FocusAwareChipContainerProps> = ({
   products,
   onSelectionChange,
   label = 'Buscar Produtos',
@@ -40,61 +29,39 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
   debounceMs = 300,
   fuzzyThreshold = 0.6,
   disabled = false,
-  error: externalError,
-  loading: externalLoading = false,
-  autoFocus = false,
+  error,
   allowClear = true,
-  ariaLabel,
-  ariaDescribedBy,
-  testID = 'search-with-chips'
+  autoFocus = false,
+  testID = 'focus-aware-chip-container',
+  ...otherProps
 }) => {
-  const theme = useTheme();
   const inputRef = useRef<any>(null);
   const containerRef = useRef<View>(null);
   
-  // Local state
+  // Estado local
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [inputPosition, setInputPosition] = useState({ x: 0, y: 100, width: 300, height: 56 });
   const [containerLayout, setContainerLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
-  // Chip persistent state management
-  const chipState = useChipPersistentState({
-    onSelectionChange: onSelectionChange,
-    enablePersistence: true,
-    transitionDelay: 200,
-    onStateChange: (newState: ChipState) => {
-      // Log state changes for debugging
-      if (__DEV__) {
-        console.log(`Chip state changed to: ${newState}`);
-      }
-    }
-  });
-
-  // Responsive layout hook
+  // Hook de foco que considera chips ativos
   const {
-    screenDimensions,
-    keyboardHeight,
-    orientation,
-    isTablet,
-    dropdownMaxHeight,
-    containerStyle: responsiveContainerStyle,
-    getDropdownPosition
-  } = useResponsiveLayout({
-    containerWidth: containerLayout.width,
-    inputHeight: inputPosition.height
-  });
+    isInputFocused,
+    isContainerFocused,
+    handleInputFocus,
+    handleInputBlur
+  } = useFocusAwareState(Boolean(selectedProduct));
 
   // Advanced search hook
   const {
     searchResults,
-    isLoading: searchLoading,
+    isLoading,
     error: searchError,
     searchQuery,
     setSearchQuery,
     clearSearch,
     hasResults,
-    isEmpty,
-    isSearching
+    isEmpty
   } = useAdvancedSearch({
     products,
     debounceMs,
@@ -121,17 +88,22 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
     disabled: disabled || !showDropdown
   });
 
-  // Combine loading states
-  const isLoading = searchLoading || externalLoading || isSearching;
-  const displayError = searchError || externalError;
+  // Responsive layout hook
+  const {
+    keyboardHeight,
+    dropdownMaxHeight,
+    getDropdownPosition
+  } = useResponsiveLayout({
+    containerWidth: containerLayout.width,
+    inputHeight: inputPosition.height
+  });
 
-  // Keyboard events are now handled by useResponsiveLayout hook
+  const displayError = searchError || error;
 
-  // Enhanced input position measurement with better precision
+  // Medição da posição do input
   const measureInput = useCallback(() => {
     if (containerRef.current) {
       containerRef.current.measureInWindow((x, y, width, height) => {
-        // Use measureInWindow for more accurate positioning
         const safeX = isNaN(x) ? 0 : Math.max(0, x);
         const safeY = isNaN(y) ? 100 : Math.max(0, y);
         const safeWidth = isNaN(width) ? 300 : Math.max(200, width);
@@ -139,7 +111,7 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
         
         setInputPosition({
           x: safeX,
-          y: safeY + safeHeight, // Position dropdown right below input
+          y: safeY + safeHeight,
           width: safeWidth,
           height: safeHeight
         });
@@ -147,47 +119,42 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
     }
   }, []);
 
-  // Handle container layout changes
+  // Handle container layout
   const handleContainerLayout = useCallback((event: any) => {
     const { x, y, width, height } = event.nativeEvent.layout;
     setContainerLayout({ x, y, width, height });
-    
-    // Trigger input measurement after layout is set
     setTimeout(measureInput, 10);
   }, [measureInput]);
 
-  // Handle text input changes
+  // Handle text changes
   const handleTextChange = useCallback((text: string) => {
     setSearchQuery(text);
     
-    // Show dropdown when user starts typing
     if (text.trim().length > 0 && !showDropdown) {
       setShowDropdown(true);
       measureInput();
     }
   }, [setSearchQuery, showDropdown, measureInput]);
 
-  // Handle input focus
-  const handleFocus = useCallback(() => {
-    chipState.setInputFocus(true);
+  // Handle focus - usa o comportamento nativo mas considera chips
+  const onFocus = useCallback(() => {
+    handleInputFocus();
     measureInput();
     
-    // Show dropdown if there's content or results
     if (searchQuery.trim().length > 0 || hasResults) {
       setShowDropdown(true);
     }
-  }, [chipState, searchQuery, hasResults, measureInput]);
+  }, [handleInputFocus, searchQuery, hasResults, measureInput]);
 
-  // Handle input blur
-  const handleBlur = useCallback(() => {
-    chipState.setInputFocus(false);
+  // Handle blur - mantém foco visual se há chips
+  const onBlur = useCallback(() => {
+    handleInputBlur();
     
-    // Delay hiding dropdown to allow item selection
     setTimeout(() => {
       setShowDropdown(false);
       resetNavigation();
     }, 200);
-  }, [chipState, resetNavigation]);
+  }, [handleInputBlur, resetNavigation]);
 
   // Handle item selection
   function handleItemSelect(index?: number) {
@@ -199,33 +166,26 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
     }
   }
 
-  // Handle product selection - GARANTIA DE SELEÇÃO ÚNICA
+  // Handle product selection
   const handleProductSelect = useCallback((result: SearchResult) => {
     const product = result.product;
-    
-    // Se já há um produto selecionado, remove primeiro para garantir seleção única
-    if (chipState.selectedProduct) {
-      chipState.removeProduct();
-    }
-    
-    // Seleciona o novo produto
-    chipState.selectProduct(product);
+    setSelectedProduct(product);
+    onSelectionChange(product);
     clearSearch();
     setShowDropdown(false);
     resetNavigation();
     
-    // Keep focus on input for better UX
     setTimeout(() => {
       inputRef.current?.focus();
     }, 100);
-  }, [chipState, clearSearch, resetNavigation]);
+  }, [onSelectionChange, clearSearch, resetNavigation]);
 
   // Handle chip removal
   const handleChipRemove = useCallback(() => {
-    chipState.removeProduct();
+    setSelectedProduct(null);
+    onSelectionChange(null);
     inputRef.current?.focus();
-  }, [chipState]);
-
+  }, [onSelectionChange]);
 
   // Handle dropdown dismiss
   const handleDropdownDismiss = useCallback(() => {
@@ -237,20 +197,19 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
   const handleKeyPress = useCallback((event: any) => {
     const handled = handleKeyDown(event);
     
-    // Additional key handling
     if (!handled) {
       switch (event.nativeEvent.key) {
         case 'Backspace':
-          if (!searchQuery.trim() && chipState.selectedProduct && allowClear) {
+          if (!searchQuery.trim() && selectedProduct && allowClear) {
             handleChipRemove();
           }
           break;
       }
     }
-  }, [handleKeyDown, searchQuery, chipState.selectedProduct, allowClear, handleChipRemove]);
+  }, [handleKeyDown, searchQuery, selectedProduct, allowClear, handleChipRemove]);
 
   // Auto-focus if requested
-  useEffect(() => {
+  React.useEffect(() => {
     if (autoFocus && inputRef.current) {
       setTimeout(() => {
         inputRef.current?.focus();
@@ -259,40 +218,46 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
   }, [autoFocus]);
 
   // Show dropdown when results are available
-  useEffect(() => {
-    if (chipState.isInputFocused && (hasResults || isEmpty || displayError) && searchQuery.trim().length > 0) {
+  React.useEffect(() => {
+    if (isInputFocused && (hasResults || isEmpty || displayError) && searchQuery.trim().length > 0) {
       if (!showDropdown) {
         setShowDropdown(true);
         measureInput();
       }
     }
-  }, [hasResults, isEmpty, displayError, searchQuery, chipState.isInputFocused, showDropdown, measureInput]);
+  }, [hasResults, isEmpty, displayError, searchQuery, isInputFocused, showDropdown, measureInput]);
 
-  // Get combined styles based on chip state
-  const stateStyles = combineStateStyles(chipState.state, theme, 'flat');
+  // Calcular padding do conteúdo baseado na presença do chip
+  const getContentStyle = () => {
+    if (!selectedProduct) return undefined;
+    
+    return {
+      paddingLeft: 100, // Espaço para o chip
+      paddingRight: 48,  // Espaço para ícones
+    };
+  };
 
   return (
     <View
-      style={[stateStyles.mainContainer.container, responsiveContainerStyle]}
+      style={styles.container}
       ref={containerRef}
       onLayout={handleContainerLayout}
     >
-      {/* Search Input */}
+      {/* TextInput com foco controlado pelo Paper */}
       <TextInput
         ref={inputRef}
         mode="outlined"
-        label={chipState.hasProduct && (chipState.isPersistent || !chipState.isInputFocused) ? "" : label}
-        placeholder={chipState.selectedProduct ? "Digite para buscar outro produto..." : placeholder}
+        label={selectedProduct && !isInputFocused ? "" : label}
+        placeholder={selectedProduct ? "Digite para buscar outro produto..." : placeholder}
         value={searchQuery}
         onChangeText={handleTextChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
+        onFocus={onFocus}
+        onBlur={onBlur}
         onKeyPress={handleKeyPress}
         disabled={disabled}
         error={!!displayError}
-        style={stateStyles.input.textInput}
-        contentStyle={stateStyles.input.contentStyle}
-        outlineStyle={chipState.hasProduct ? stateStyles.input.outlineStyle : undefined}
+        // O estado de foco é controlado naturalmente pelo Paper
+        contentStyle={getContentStyle()}
         right={
           isLoading ? (
             <TextInput.Icon icon="loading" disabled />
@@ -309,48 +274,27 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
         }
         testID={`${testID}-input`}
         accessible
-        accessibilityLabel={ariaLabel || label}
+        accessibilityLabel={typeof label === 'string' ? label : 'Buscar produtos'}
         accessibilityHint="Digite para buscar produtos. Use as setas para navegar pelos resultados."
         accessibilityState={{
           expanded: showDropdown,
           busy: isLoading
         }}
         accessibilityRole="search"
+        {...otherProps}
       />
 
-      {/* Selected Product Chip */}
-      {chipState.selectedProduct && (
-        <View style={stateStyles.container.container}>
-          <ProductChip
-            product={chipState.selectedProduct}
+      {/* Chip renderizado sobre o input */}
+      {selectedProduct && (
+        <View style={styles.chipContainer}>
+          <SimpleProductChip
+            product={selectedProduct}
             onRemove={handleChipRemove}
             maxLength={20}
             variant="flat"
-            chipState={chipState.state}
-            showStateIndicator={__DEV__}
             testID={`${testID}-chip`}
           />
         </View>
-      )}
-
-      {/* Custom Label Overlay when chip is present and input not focused */}
-      {chipState.hasProduct && !chipState.isInputFocused && !searchQuery && (
-        <View style={stateStyles.labelOverlay.overlay} pointerEvents="none">
-          <Text style={stateStyles.labelOverlay.labelText}>
-            {label}
-          </Text>
-        </View>
-      )}
-
-      {/* Error Text */}
-      {displayError && (
-        <Text
-          style={stateStyles.mainContainer.errorText}
-          accessible
-          accessibilityRole="alert"
-        >
-          {displayError}
-        </Text>
       )}
 
       {/* Search Dropdown */}
@@ -361,7 +305,7 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
         onProductSelect={handleProductSelect}
         searchTerm={searchQuery}
         isLoading={isLoading}
-        error={displayError || null}
+        error={typeof displayError === 'string' ? displayError : null}
         isEmpty={isEmpty}
         maxHeight={dropdownMaxHeight}
         width={inputPosition.width}
@@ -378,9 +322,23 @@ const SearchWithChips: React.FC<SearchWithChipsProps> = ({
   );
 };
 
-// Estilos movidos para chipThemes.ts para melhor organização
 const styles = StyleSheet.create({
-  // Estilos específicos do componente que não dependem do estado
+  container: {
+    position: 'relative',
+    minHeight: 56,
+  },
+  chipContainer: {
+    position: 'absolute',
+    left: 12,
+    top: 12,
+    right: 48,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    maxWidth: '75%',
+    pointerEvents: 'box-none',
+  },
 });
 
-export default SearchWithChips;
+export default FocusAwareChipContainer;

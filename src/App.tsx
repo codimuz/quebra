@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useCallback } from 'react';
+import React, { useMemo, useRef, useState, useCallback } from 'react';
 import { ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 import {
   Appbar,
@@ -23,6 +23,8 @@ import {
   DropdownRef,
 } from 'react-native-paper-dropdown';
 import SearchWithChips from './components/SearchWithChips';
+import SingleChipSearch from './components/SingleChipSearch';
+import FocusAwareChipContainer from './components/FocusAwareChipContainer';
 import { PRODUCTS } from './data/products';
 
 const OPTIONS = [
@@ -126,6 +128,8 @@ export default function App() {
   const [gender, setGender] = useState<string>();
   const [colors, setColors] = useState<string[]>([]);
   const [fabState, setFabState] = useState({ open: false });
+  const [selectedProduct1, setSelectedProduct1] = useState<any>(null);
+  const [selectedProduct2, setSelectedProduct2] = useState<any>(null);
   const refDropdown1 = useRef<DropdownRef>(null);
   const Theme = nightMode ? MD3DarkTheme : MD3LightTheme;
 
@@ -141,7 +145,7 @@ export default function App() {
           ]}
         >
           <Appbar.Header elevated>
-            <Appbar.Content title={'Dropdown Demo'} />
+            <Appbar.Content title={'Single Chip Search Demo'} />
             <Appbar.Action
               icon={nightMode ? 'brightness-7' : 'brightness-3'}
               onPress={() => setNightmode(!nightMode)}
@@ -163,13 +167,35 @@ export default function App() {
               <View style={styles.spacer} />
               <SearchWithChips
                 products={PRODUCTS}
-                onSelectionChange={(products) => {
-                  console.log('\n=== Produtos Selecionados ===');
-                  console.log('Produtos selecionados:', products.length);
-                  products.forEach(product => console.log(`- ${product.description} (EAN: ${product.ean}) - ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}`));
-                  console.log('========================\n');
+                onSelectionChange={(product) => {
+                  setSelectedProduct1(product);
+                  console.log('\n=== SearchWithChips (Refatorado) ===');
+                  if (product) {
+                    console.log(`Produto: ${product.description} (EAN: ${product.ean}) - ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}`);
+                  } else {
+                    console.log('Nenhum produto selecionado');
+                  }
+                  console.log('===============================\n');
                 }}
-                label="Buscar Produtos"
+                label="SearchWithChips (Refatorado)"
+                placeholder="Digite EAN ou descrição do produto..."
+              />
+              <View style={styles.spacer} />
+              
+              <SingleChipSearch
+                products={PRODUCTS}
+                selectedProduct={selectedProduct2}
+                onSelectionChange={(product) => {
+                  setSelectedProduct2(product);
+                  console.log('\n=== SingleChipSearch (Novo) ===');
+                  if (product) {
+                    console.log(`Produto: ${product.description} (EAN: ${product.ean}) - ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}`);
+                  } else {
+                    console.log('Nenhum produto selecionado');
+                  }
+                  console.log('============================\n');
+                }}
+                label="SingleChipSearch (Novo)"
                 placeholder="Digite EAN ou descrição do produto..."
               />
               <View style={styles.spacer} />
@@ -188,9 +214,11 @@ export default function App() {
                 mode={'contained'}
                 onPress={() => {
                   setGender(undefined);
+                  setSelectedProduct1(null);
+                  setSelectedProduct2(null);
                 }}
               >
-                Salvar
+                Limpar Todos
               </Button>
               <View style={styles.spacer} />
               <View style={styles.spacer} />
