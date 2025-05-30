@@ -15,25 +15,60 @@ interface DatabaseProviderProps {
  * Provedor do contexto de banco de dados
  */
 export function DatabaseProvider({ children, config }: DatabaseProviderProps) {
-  const databaseHook = useDatabase(config);
+  console.log('=== DatabaseProvider inicializando ===');
+  console.log('Config recebida:', config);
 
-  return (
-    <DatabaseContext.Provider value={databaseHook}>
-      {children}
-    </DatabaseContext.Provider>
-  );
+  try {
+    const databaseHook = useDatabase(config);
+    console.log('Estado do Database Hook:', {
+      loading: databaseHook.loading,
+      error: databaseHook.error,
+      initialized: databaseHook.initialized,
+      hasDatabase: !!databaseHook.database,
+      hasMigrations: !!databaseHook.migrations
+    });
+
+    return (
+      <DatabaseContext.Provider value={databaseHook}>
+        {children}
+      </DatabaseContext.Provider>
+    );
+  } catch (error) {
+    console.error('=== ERRO NO PROVIDER ===');
+    console.error('Erro:', error);
+    console.error('Stack:', error instanceof Error ? error.stack : 'No stack');
+    throw error;
+  }
 }
 
 /**
  * Hook para usar o contexto de banco de dados
  */
 export function useDataBaseContext(): DatabaseHookResult {
+  console.log('=== useDataBaseContext chamado ===');
   const context = useContext(DatabaseContext);
+  
   if (!context) {
+    console.error('Contexto não encontrado no useDataBaseContext');
     throw new Error(
       'useDataBaseContext deve ser usado dentro de um DatabaseProvider'
     );
   }
+
+  console.log('Estado atual do contexto:', {
+    loading: context.loading,
+    error: context.error,
+    initialized: context.initialized,
+    hasDatabase: !!context.database,
+    hasMigrations: !!context.migrations
+  });
+
+  if (context.database) {
+    console.log('Database instance presente no contexto');
+  } else {
+    console.warn('Database instance ausente no contexto');
+  }
+
   return context;
 }
 

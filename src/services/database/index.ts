@@ -19,17 +19,27 @@ import { migrations } from './migrations';
  * Inicializa o banco de dados e executa as migrações pendentes
  */
 export async function initializeDatabase(config: DatabaseConfig) {
+  console.log('=== Iniciando inicialização do banco de dados ===');
+  console.log('Configuração recebida:', config);
+
   try {
-    // Criar instância do banco de dados
+    console.log('Criando instância do DatabaseService...');
     const databaseService = new DatabaseService(config);
+    
+    console.log('Inicializando DatabaseService...');
     await databaseService.initialize();
+    console.log('DatabaseService inicializado com sucesso');
 
-    // Executar migrações
-    const migrationResults = await new MigrationService(databaseService).migrate();
+    console.log('Criando instância do MigrationService...');
+    const migrationService = new MigrationService(databaseService);
+    
+    console.log('Executando migrações...');
+    const migrationResults = await migrationService.migrate();
+    console.log('Resultados das migrações:', migrationResults);
 
-    // Verificar se houve falha em alguma migração
     const failedMigrations = migrationResults.filter((r: MigrationResult) => !r.success);
     if (failedMigrations.length > 0) {
+      console.error('Falha detectada nas migrações:', failedMigrations);
       throw new Error(
         `Falha ao executar migrações: ${
           failedMigrations
@@ -39,13 +49,19 @@ export async function initializeDatabase(config: DatabaseConfig) {
       );
     }
 
+    console.log('Inicialização completa com sucesso');
     return databaseService;
   } catch (error) {
-    throw new Error(
-      `Erro ao inicializar banco de dados: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
+    console.error('=== ERRO NA INICIALIZAÇÃO ===');
+    console.error('Erro original:', error);
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
+    
+    const errorMessage = `Erro ao inicializar banco de dados: ${
+      error instanceof Error ? error.message : String(error)
+    }`;
+    console.error('Mensagem de erro final:', errorMessage);
+    
+    throw new Error(errorMessage);
   }
 }
 

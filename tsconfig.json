@@ -28,10 +28,11 @@
     "paths": {
       "*": ["src/*"]
     },
-    "types": ["react", "react-native"]
+    "types": ["react", "react-native", "jest", "node"]
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "**/__tests__/**/*"
   ],
   "exclude": [
     "node_modules",
