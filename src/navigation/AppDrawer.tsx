@@ -1,0 +1,184 @@
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import HeaderBar from '../components/HeaderBar';
+import {
+  Drawer as PaperDrawer,
+  Text,
+  useTheme,
+  Divider,
+  Avatar,
+  Switch,
+} from 'react-native-paper';
+import { DrawerContentScrollView, DrawerContentComponentProps } from '@react-navigation/drawer';
+import { useAppTheme } from '../contexts/ThemeContext';
+
+// Importar as telas
+import ProdutosScreen from '../screens/ProdutosScreen';
+import MotivosScreen from '../screens/MotivosScreen';
+import RelatoriosScreen from '../screens/RelatoriosScreen';
+
+const Drawer = createDrawerNavigator();
+
+// Componente customizado para o conteúdo do drawer
+function CustomDrawerContent(props: DrawerContentComponentProps) {
+  const theme = useTheme();
+  const { isDarkMode, toggleTheme } = useAppTheme();
+  const { navigation, state } = props;
+  
+  const currentRoute = state.routeNames[state.index];
+
+  return (
+    <DrawerContentScrollView {...props}>
+      <View style={[styles.drawerHeader, { backgroundColor: theme.colors.primaryContainer }]}>
+        <Avatar.Icon 
+          size={64} 
+          icon="account" 
+          style={{ backgroundColor: theme.colors.primary }}
+        />
+        <Text 
+          variant="titleLarge" 
+          style={[styles.drawerTitle, { color: theme.colors.onPrimaryContainer }]}
+        >
+          Sistema de Motivos
+        </Text>
+        <Text 
+          variant="bodyMedium" 
+          style={[styles.drawerSubtitle, { color: theme.colors.onPrimaryContainer }]}
+        >
+          Gestão de Produtos
+        </Text>
+      </View>
+
+      <View style={styles.drawerContent}>
+        <PaperDrawer.Item
+          label="Produtos"
+          icon="package-variant"
+          active={currentRoute === 'Produtos'}
+          onPress={() => navigation.navigate('Produtos')}
+          style={styles.drawerItem}
+        />
+        
+        <PaperDrawer.Item
+          label="Motivos"
+          icon="format-list-bulleted"
+          active={currentRoute === 'Motivos'}
+          onPress={() => navigation.navigate('Motivos')}
+          style={styles.drawerItem}
+        />
+        
+        <PaperDrawer.Item
+          label="Relatórios"
+          icon="chart-line"
+          active={currentRoute === 'Relatórios'}
+          onPress={() => navigation.navigate('Relatórios')}
+          style={styles.drawerItem}
+        />
+
+        <Divider style={styles.divider} />
+
+        {/* Toggle de Tema */}
+        <View style={styles.themeToggleContainer}>
+          <PaperDrawer.Item
+            label={isDarkMode ? "Modo Escuro" : "Modo Claro"}
+            icon={isDarkMode ? "brightness-3" : "brightness-7"}
+            onPress={toggleTheme}
+            style={styles.drawerItem}
+            right={() => (
+              <Switch
+                value={isDarkMode}
+                onValueChange={toggleTheme}
+                style={styles.themeSwitch}
+              />
+            )}
+          />
+        </View>
+
+        <PaperDrawer.Item
+          label="Configurações"
+          icon="cog"
+          onPress={() => console.log('Configurações')}
+          style={styles.drawerItem}
+        />
+        
+        <PaperDrawer.Item
+          label="Ajuda"
+          icon="help-circle"
+          onPress={() => console.log('Ajuda')}
+          style={styles.drawerItem}
+        />
+      </View>
+    </DrawerContentScrollView>
+  );
+}
+
+export default function AppDrawer() {
+  const theme = useTheme();
+
+  return (
+    <NavigationContainer>
+      <Drawer.Navigator
+        drawerContent={(props) => <CustomDrawerContent {...props} />}
+        screenOptions={{
+          header: (props) => <HeaderBar {...props} />,
+          headerShown: true,
+          drawerStyle: {
+            backgroundColor: theme.colors.surface,
+          },
+          drawerActiveTintColor: theme.colors.primary,
+          drawerInactiveTintColor: theme.colors.onSurface,
+        }}
+      >
+        <Drawer.Screen 
+          name="Produtos" 
+          component={ProdutosScreen}
+        />
+        <Drawer.Screen 
+          name="Motivos" 
+          component={MotivosScreen}
+        />
+        <Drawer.Screen 
+          name="Relatórios" 
+          component={RelatoriosScreen}
+        />
+      </Drawer.Navigator>
+    </NavigationContainer>
+  );
+}
+
+const styles = StyleSheet.create({
+  drawerHeader: {
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  drawerTitle: {
+    marginTop: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  drawerSubtitle: {
+    marginTop: 4,
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+  drawerContent: {
+    paddingHorizontal: 8,
+  },
+  drawerItem: {
+    marginVertical: 2,
+    borderRadius: 8,
+  },
+  divider: {
+    marginVertical: 16,
+    marginHorizontal: 8,
+  },
+  themeToggleContainer: {
+    marginBottom: 8,
+  },
+  themeSwitch: {
+    alignSelf: 'center',
+    marginRight: 8,
+  },
+});

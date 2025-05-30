@@ -190,7 +190,7 @@ const PaperProductDropdown: React.FC<PaperProductDropdownProps> = ({
         <View style={[
           styles.selectedProductBanner,
           {
-            backgroundColor: theme.colors.primaryContainer,
+            backgroundColor: theme.colors.surfaceVariant,
             borderColor: theme.colors.outline,
           }
         ]}>
@@ -205,7 +205,7 @@ const PaperProductDropdown: React.FC<PaperProductDropdownProps> = ({
             variant="bodySmall"
             style={[
               styles.selectedProductInfo,
-              { color: theme.colors.onPrimaryContainer }
+              { color: theme.colors.onSurfaceVariant }
             ]}
           >
             {selectedProduct.descricao} • R$ {selectedProduct.preco?.toFixed(2) || '0.00'} ({selectedProduct.unidade})
@@ -226,22 +226,75 @@ const PaperProductDropdown: React.FC<PaperProductDropdownProps> = ({
           ],
         }}
       >
-        <TextInput
-          ref={textInputRef}
-          label={label}
-          placeholder={selectedProduct ? '' : placeholder}
-          value={searchText}
-          onChangeText={setSearchText}
-          onFocus={() => {
-            if (!selectedProduct) {
-              setTimeout(measureInput, 100);
-              setIsDropdownVisible(true);
+      <TextInput
+        ref={textInputRef}
+        label={label}
+        placeholder={selectedProduct ? '' : placeholder}
+        value={searchText}
+        onChangeText={setSearchText}
+        onFocus={() => {
+          if (!selectedProduct) {
+            setTimeout(measureInput, 100);
+            setIsDropdownVisible(true);
+          }
+        }}
+        onBlur={() => {
+          // Delay para permitir clique nos itens do dropdown
+          setTimeout(() => setIsDropdownVisible(false), 150);
+        }}
+        returnKeyType="done"
+        onSubmitEditing={() => {
+          const numericSearch = searchText.trim();
+          if (/^\d+$/.test(numericSearch)) {
+            // Busca por código curto EAN ou código do produto completo
+            const exactMatch = products.find(p => 
+              p.codigoCurtoean === numericSearch || 
+              p.codigoProduto === numericSearch ||
+              p.codigoProduto === numericSearch.padStart(13, '0') // Para produtos com código EAN completo
+            );
+            
+            if (exactMatch) {
+              handleProductSelect(exactMatch);
+            } else {
+              // Feedback visual quando nenhum produto é encontrado
+              textInputRef.current?.setNativeProps({
+                style: { borderColor: theme.colors.error }
+              });
+              setTimeout(() => {
+                textInputRef.current?.setNativeProps({
+                  style: { borderColor: theme.colors.outline }
+                });
+              }, 1000);
             }
-          }}
-          onBlur={() => {
-            // Delay para permitir clique nos itens do dropdown
-            setTimeout(() => setIsDropdownVisible(false), 150);
-          }}
+          }
+        }}
+        onKeyPress={({ nativeEvent }) => {
+          if (nativeEvent.key === 'Enter') {
+            const numericSearch = searchText.trim();
+            if (/^\d+$/.test(numericSearch)) {
+              // Busca por código curto EAN ou código do produto completo
+              const exactMatch = products.find(p => 
+                p.codigoCurtoean === numericSearch || 
+                p.codigoProduto === numericSearch ||
+                p.codigoProduto === numericSearch.padStart(13, '0') // Para produtos com código EAN completo
+              );
+              
+              if (exactMatch) {
+                handleProductSelect(exactMatch);
+              } else {
+                // Feedback visual quando nenhum produto é encontrado
+                textInputRef.current?.setNativeProps({
+                  style: { borderColor: theme.colors.error }
+                });
+                setTimeout(() => {
+                  textInputRef.current?.setNativeProps({
+                    style: { borderColor: theme.colors.outline }
+                  });
+                }, 1000);
+              }
+            }
+          }
+        }}
           mode="outlined"
           disabled={disabled || !!selectedProduct}
           style={styles.textInput}

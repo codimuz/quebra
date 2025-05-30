@@ -6,7 +6,10 @@ const config = {
   ...defaultConfig,
   resolver: {
     ...defaultConfig.resolver,
+    unstable_enableSymlinks: false,
   },
+  watchFolders: [],
+  resetCache: true,
 };
 
 module.exports = config;
