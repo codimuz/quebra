@@ -2,6 +2,9 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { AppThemeProvider, useAppTheme } from './contexts/ThemeContext';
+import { DatabaseProvider } from './contexts/DatabaseContext';
+import { DatabaseInitializer } from './components/DatabaseInitializer';
+import { DB_CONFIG } from './config/database';
 import AppDrawer from './navigation/AppDrawer';
 
 function AppContent() {
@@ -10,7 +13,9 @@ function AppContent() {
   return (
     <PaperProvider theme={theme}>
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <AppDrawer />
+        <DatabaseInitializer>
+          <AppDrawer />
+        </DatabaseInitializer>
       </View>
     </PaperProvider>
   );
@@ -19,7 +24,9 @@ function AppContent() {
 export default function App() {
   return (
     <AppThemeProvider>
-      <AppContent />
+      <DatabaseProvider config={DB_CONFIG}>
+        <AppContent />
+      </DatabaseProvider>
     </AppThemeProvider>
   );
 }

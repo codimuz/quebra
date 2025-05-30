@@ -1,32 +1,42 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "strict": true,
+    "skipLibCheck": true,
+    "jsx": "react-native",
+    "target": "es2017",
+    "lib": ["es2017", "esnext.asynciterable"],
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "jsx": "react-native",
-
+    "isolatedModules": true,
     "moduleResolution": "node",
     "noEmit": true,
     "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "target": "ESNext",
-    "strict": true,
-    "downlevelIteration": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "*": [
-        "src/*"
-      ]
-    }
+      "*": ["src/*"]
+    },
+    "types": ["react", "react-native"]
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
     "babel.config.js",
-    "metro.config.js"
-  ],
-  "extends": "expo/tsconfig.base"
+    "metro.config.js",
+    "node_modules/@types/expo/node_modules/react-native-maps"
+  ]
 }

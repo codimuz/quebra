@@ -83,8 +83,9 @@ const ProductDisplay = ({ selectedProduct, weightValue }: { selectedProduct: Pro
   );
 };
 
-export default function ProdutosScreen() {
+export default function QuebrasScreen() {
   const theme = useTheme();
+  console.log('Theme colors:', theme.colors);
   const [motivo, setMotivo] = useState<string>();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [weightValue, setWeightValue] = useState<string>('');
@@ -117,8 +118,17 @@ export default function ProdutosScreen() {
   ];
 
   return (
-    <View style={styles.container}>
-      <ScrollView keyboardShouldPersistTaps={'handled'}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <ScrollView
+        keyboardShouldPersistTaps={'handled'}
+        style={{
+          backgroundColor: theme.colors.background,
+          flexGrow: 1
+        }}
+        contentContainerStyle={{
+          flexGrow: 1
+        }}
+      >
         <View style={styles.formWrapper}>
           <View style={styles.motivoDropdown}>
             <Dropdown
@@ -184,6 +194,7 @@ const styles = StyleSheet.create({
   },
   formWrapper: {
     margin: 16,
+    flex: 1,
   },
   spacer: {
     height: 16,
