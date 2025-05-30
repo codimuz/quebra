@@ -96,7 +96,7 @@ export class FuzzySearchEngine {
   }
 
   private searchEAN(product: Product, query: string): SearchResult | null {
-    const ean = product.ean.toLowerCase();
+    const ean = product.codigoCurtoean?.toLowerCase() || '';
 
     // Exact EAN match
     if (ean === query) {
@@ -104,8 +104,8 @@ export class FuzzySearchEngine {
         product,
         score: 10000,
         matchType: MatchType.EAN_EXACT,
-        matchedText: product.ean,
-        highlightRanges: [{ start: 0, end: product.ean.length }]
+        matchedText: product.codigoCurtoean || '',
+        highlightRanges: [{ start: 0, end: product.codigoCurtoean?.length || 0 }]
       };
     }
 
@@ -116,7 +116,7 @@ export class FuzzySearchEngine {
         product,
         score: 8000 + (matchRatio * 1000),
         matchType: MatchType.EAN_PARTIAL,
-        matchedText: product.ean,
+        matchedText: product.codigoCurtoean || '',
         highlightRanges: [{ start: 0, end: query.length }]
       };
     }
@@ -125,7 +125,7 @@ export class FuzzySearchEngine {
   }
 
   private searchDescription(product: Product, query: string): SearchResult | null {
-    const description = this.normalizeQuery(product.description);
+    const description = this.normalizeQuery(product.descricao);
     const queryWords = query.split(/\s+/).filter(w => w.length > 0);
 
     // Exact description match
@@ -135,7 +135,7 @@ export class FuzzySearchEngine {
         product,
         score: 6000 + (query.length / description.length * 1000),
         matchType: MatchType.DESCRIPTION_EXACT,
-        matchedText: product.description,
+        matchedText: product.descricao,
         highlightRanges: [{ start: startIndex, end: startIndex + query.length }]
       };
     }
@@ -147,20 +147,20 @@ export class FuzzySearchEngine {
         product,
         score: 5000 + exactWordMatches.score,
         matchType: MatchType.DESCRIPTION_EXACT,
-        matchedText: product.description,
+        matchedText: product.descricao,
         highlightRanges: exactWordMatches.ranges
       };
     }
 
     // Fuzzy matching
     if (this.config.enableNGram || this.config.enablePhonetic) {
-      const fuzzyResult = this.fuzzyMatch(description, query, product.description);
+      const fuzzyResult = this.fuzzyMatch(description, query, product.descricao);
       if (fuzzyResult && fuzzyResult.score >= this.config.fuzzyThreshold * 1000) {
         return {
           product,
           score: fuzzyResult.score,
           matchType: MatchType.DESCRIPTION_FUZZY,
-          matchedText: product.description,
+          matchedText: product.descricao,
           highlightRanges: fuzzyResult.ranges
         };
       }
@@ -174,7 +174,7 @@ export class FuzzySearchEngine {
           product,
           score: semanticScore,
           matchType: MatchType.DESCRIPTION_SEMANTIC,
-          matchedText: product.description
+          matchedText: product.descricao
         };
       }
     }
