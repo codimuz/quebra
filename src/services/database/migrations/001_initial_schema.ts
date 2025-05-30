@@ -4,6 +4,15 @@ export const migrationName = '001_initial_schema';
 export const version = 1;
 
 export async function up(transaction: SQLTransactionExecutor): Promise<void> {
+  // Tabela de versões do banco de dados
+  await transaction.executeSql(`
+    CREATE TABLE IF NOT EXISTS database_versions (
+      version INTEGER PRIMARY KEY,
+      description TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+
   // Tabela de produtos
   await transaction.executeSql(`
     CREATE TABLE IF NOT EXISTS products (
@@ -47,7 +56,7 @@ export async function up(transaction: SQLTransactionExecutor): Promise<void> {
 }
 
 export async function down(transaction: SQLTransactionExecutor): Promise<void> {
-  // Remover triggers
+  // Remover triggers e tabelas
   await transaction.executeSql('DROP TRIGGER IF EXISTS update_products_timestamp;');
   
   // Remover índices
@@ -55,8 +64,9 @@ export async function down(transaction: SQLTransactionExecutor): Promise<void> {
   await transaction.executeSql('DROP INDEX IF EXISTS idx_products_name;');
   await transaction.executeSql('DROP INDEX IF EXISTS idx_products_deleted;');
   
-  // Remover tabela
+  // Remover tabelas
   await transaction.executeSql('DROP TABLE IF EXISTS products;');
+  await transaction.executeSql('DROP TABLE IF EXISTS database_versions;');
 }
 
 export const description = 'Criação da estrutura inicial do banco de dados';

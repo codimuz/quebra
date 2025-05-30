@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import HeaderBar from '../components/HeaderBar';
 import {
@@ -67,7 +66,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 
           <PaperDrawer.Item
             label="Quebras"
-            icon="package-minus"
+            icon="package-variant-minus"
             active={currentRoute === 'Quebras'}
             onPress={() => navigation.navigate('Quebras')}
             style={styles.drawerItem}
@@ -148,7 +147,6 @@ export default function AppDrawer() {
   const theme = useTheme();
 
   return (
-    <NavigationContainer>
       <Drawer.Navigator
         drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={{
@@ -181,7 +179,6 @@ export default function AppDrawer() {
           component={RelatoriosScreen}
         />
       </Drawer.Navigator>
-    </NavigationContainer>
   );
 }
 

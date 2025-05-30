@@ -7,14 +7,17 @@ import {
   SQLResultRow,
 } from '../../types/database';
 import { SQLiteWrapper } from './SQLiteWrapper';
+import { MigrationService } from './MigrationService';
 
 export class DatabaseService {
   private db: SQLiteWrapper;
   private config: DatabaseConfig;
+  private migrationService: MigrationService;
 
   constructor(config: DatabaseConfig) {
     this.config = config;
     this.db = new SQLiteWrapper(config);
+    this.migrationService = new MigrationService(this);
   }
 
   /**
@@ -22,30 +25,8 @@ export class DatabaseService {
    */
   async initialize(): Promise<void> {
     try {
-      // Criar tabela de versões
-      await this.db.exec(`
-        CREATE TABLE IF NOT EXISTS database_versions (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          version INTEGER NOT NULL UNIQUE,
-          timestamp TEXT NOT NULL DEFAULT (datetime('now')),
-          description TEXT NOT NULL
-        );
-      `);
-
-      // Verificar versão atual do banco de dados (se houver alguma)
-      // Usar execScalar para obter apenas o valor da versão, ou null se não houver
-      const currentDbVersion = await this.db.execScalar<number>(
-        'SELECT version FROM database_versions ORDER BY version DESC LIMIT 1'
-      );
-
-      // Inserir a versão inicial SOMENTE SE o banco estiver completamente vazio
-      // Se já existe uma versão (mesmo que seja 1), não insere 1 de novo
-      if (currentDbVersion === null || currentDbVersion === undefined) {
-        await this.db.exec(
-          'INSERT INTO database_versions (version, description) VALUES (?, ?)',
-          [this.config.version, this.config.description]
-        );
-      }
+      // Executa as migrações pendentes
+      await this.migrationService.migrate();
     } catch (error) {
       throw this.createDatabaseError(
         'Erro ao inicializar banco de dados',
