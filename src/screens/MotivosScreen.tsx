@@ -101,7 +101,12 @@ export default function MotivosScreen() {
 
           {/* Motivos Selecionados */}
           {selectedMotivos.length > 0 && (
-            <Card style={styles.selectedCard}>
+            <Card
+              style={[
+                styles.selectedCard,
+                { backgroundColor: theme.colors.surface }
+              ]}
+            >
               <Card.Content>
                 <View style={styles.selectedHeader}>
                   <Text variant="titleMedium">
@@ -130,9 +135,17 @@ export default function MotivosScreen() {
           )}
 
           {/* Lista de Motivos */}
-          <Card style={styles.motivosCard}>
+          <Card
+            style={[
+              styles.motivosCard,
+              { backgroundColor: theme.colors.surface }
+            ]}
+          >
             <Card.Content>
-              <Text variant="titleLarge" style={styles.sectionTitle}>
+              <Text variant="titleLarge" style={[
+                styles.sectionTitle,
+                { color: theme.colors.onSurface }
+              ]}>
                 Motivos Disponíveis
               </Text>
               {filteredMotivos.map(motivo => (

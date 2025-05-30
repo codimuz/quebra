@@ -15,7 +15,7 @@ import { DrawerContentScrollView, DrawerContentComponentProps } from '@react-nav
 import { useAppTheme } from '../contexts/ThemeContext';
 
 // Importar as telas
-import ProdutosScreen from '../screens/ProdutosScreen';
+import ProdutosScreen from '../screens/QuebrasScreen';
 import MotivosScreen from '../screens/MotivosScreen';
 import RelatoriosScreen from '../screens/RelatoriosScreen';
 
@@ -76,7 +76,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
           style={styles.drawerItem}
         />
 
-        <Divider style={styles.divider} />
+        <Divider style={[styles.divider, { backgroundColor: theme.colors.outline }]} />
 
         {/* Toggle de Tema */}
         <View style={styles.themeToggleContainer}>
@@ -124,6 +124,9 @@ export default function AppDrawer() {
           header: (props) => <HeaderBar {...props} />,
           headerShown: true,
           drawerStyle: {
+            backgroundColor: theme.colors.surface,
+          },
+          drawerContentStyle: {
             backgroundColor: theme.colors.surface,
           },
           drawerActiveTintColor: theme.colors.primary,

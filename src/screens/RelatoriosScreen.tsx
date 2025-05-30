@@ -161,12 +161,15 @@ export default function RelatoriosScreen() {
   );
 
   const renderDetailedView = () => (
-    <Card style={styles.tableCard}>
+    <Card style={[styles.tableCard, { backgroundColor: theme.colors.surface }]}>
       <Card.Content>
-        <Text variant="titleLarge" style={styles.sectionTitle}>
+        <Text variant="titleLarge" style={[
+          styles.sectionTitle,
+          { color: theme.colors.onSurface }
+        ]}>
           Registros Detalhados
         </Text>
-        <DataTable>
+        <DataTable style={{ backgroundColor: theme.colors.surface }}>
           <DataTable.Header>
             <DataTable.Title>Produto</DataTable.Title>
             <DataTable.Title>Motivo</DataTable.Title>
@@ -195,9 +198,12 @@ export default function RelatoriosScreen() {
   );
 
   const renderAnalyticsView = () => (
-    <Card style={styles.analyticsCard}>
+    <Card style={[styles.analyticsCard, { backgroundColor: theme.colors.surface }]}>
       <Card.Content>
-        <Text variant="titleLarge" style={styles.sectionTitle}>
+        <Text variant="titleLarge" style={[
+          styles.sectionTitle,
+          { color: theme.colors.onSurface }
+        ]}>
           Análise de Tendências
         </Text>
         
@@ -251,9 +257,17 @@ export default function RelatoriosScreen() {
       <ScrollView>
         <View style={styles.contentWrapper}>
           {/* Filtros de Período */}
-          <Card style={styles.filtersCard}>
+          <Card
+            style={[
+              styles.filtersCard,
+              { backgroundColor: theme.colors.surface }
+            ]}
+          >
             <Card.Content>
-              <Text variant="titleMedium" style={styles.filterTitle}>
+              <Text variant="titleMedium" style={[
+                styles.filterTitle,
+                { color: theme.colors.onSurface }
+              ]}>
                 Período do Relatório
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
