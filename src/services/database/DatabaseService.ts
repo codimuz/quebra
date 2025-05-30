@@ -25,9 +25,27 @@ export class DatabaseService {
    */
   async initialize(): Promise<void> {
     try {
-      // Executa as migrações pendentes
+      console.log('DatabaseService.initialize: Iniciando inicialização do banco de dados');
+      
+      // Criar tabela de versões APENAS SE NÃO EXISTIR
+      console.log('DatabaseService.initialize: Criando tabela database_versions se não existir');
+      await this.db.exec(`
+        CREATE TABLE IF NOT EXISTS database_versions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          version INTEGER NOT NULL UNIQUE,
+          timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+          description TEXT NOT NULL
+        );
+      `);
+      console.log('DatabaseService.initialize: Tabela database_versions verificada/criada com sucesso');
+
+      // Executar as migrações pendentes
+      console.log('DatabaseService.initialize: Iniciando processo de migração');
       await this.migrationService.migrate();
+      console.log('DatabaseService.initialize: Processo de migração concluído');
+
     } catch (error) {
+      console.error('DatabaseService.initialize: Erro durante inicialização:', error);
       throw this.createDatabaseError(
         'Erro ao inicializar banco de dados',
         'INIT_ERROR',
