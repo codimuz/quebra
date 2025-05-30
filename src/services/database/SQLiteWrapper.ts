@@ -5,7 +5,24 @@ export class SQLiteWrapper {
   private db: SQLite.SQLiteDatabase;
 
   constructor(config: DatabaseConfig) {
+    if (!config.name) {
+      throw new Error('Nome do banco de dados é obrigatório');
+    }
     this.db = SQLite.openDatabaseSync(config.name);
+  }
+
+  /**
+   * Substitui os parâmetros na query de forma segura
+   */
+  private replaceParams(sql: string, params: SqlParams): string {
+    if (!params.length) return sql;
+
+    return sql.replace(/\?/g, (match, index) => {
+      const param = params[index];
+      if (param === null) return 'NULL';
+      if (typeof param === 'string') return `'${param.replace(/'/g, "''")}'`;
+      return param.toString();
+    });
   }
 
   /**
@@ -13,23 +30,17 @@ export class SQLiteWrapper {
    */
   async exec(sql: string, params: SqlParams = []): Promise<SQLResultRow[]> {
     try {
-      // Substituir os parâmetros na query manualmente
-      const query = sql.replace(/\?/g, (_, i) => {
-        const param = params[i];
-        if (param === null) return 'NULL';
-        if (typeof param === 'string') return `'${param.replace(/'/g, "''")}'`;
-        return param.toString();
-      });
-
-      // Executar a query usando o método nativo
-      const result = await this.db.execAsync(query) as unknown;
+      // Preparar a query com os parâmetros
+      const query = this.replaceParams(sql, params);
       
-      // Se o resultado for um array, retorná-lo
-      if (Array.isArray(result)) {
-        return result as SQLResultRow[];
+      // Se for uma query SELECT, executar e retornar resultados
+      if (sql.trim().toLowerCase().startsWith('select')) {
+        const result = await this.db.execAsync(query) as unknown as SQLResultRow[];
+        return result || [];
       }
-
-      // Se não houver resultado, retornar array vazio
+      
+      // Para outras queries (INSERT, UPDATE, DELETE), apenas executar
+      await this.db.execAsync(query);
       return [];
     } catch (error) {
       console.error('Erro ao executar SQL:', sql);
@@ -55,14 +66,29 @@ export class SQLiteWrapper {
    * Executa uma query de inserção e retorna o ID inserido
    */
   async execInsert(sql: string, params: SqlParams = []): Promise<number | null> {
-    await this.exec(sql, params);
-    return this.execScalar<number>('SELECT last_insert_rowid()');
+    try {
+      // Executar a inserção
+      await this.exec(sql, params);
+      
+      // Obter o ID do último registro inserido
+      const lastIdQuery = 'SELECT last_insert_rowid() as id';
+      const result = await this.db.execAsync(lastIdQuery) as unknown as Array<{id: number}>;
+      
+      return result?.[0]?.id || null;
+    } catch (error) {
+      console.error('Erro ao executar inserção:', sql);
+      console.error('Parâmetros:', params);
+      console.error('Erro:', error);
+      throw error;
+    }
   }
 
   /**
    * Fecha a conexão com o banco de dados
    */
   async close(): Promise<void> {
-    await this.db.closeAsync();
+    if (this.db && typeof this.db.closeAsync === 'function') {
+      await this.db.closeAsync();
+    }
   }
 }
