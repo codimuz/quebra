@@ -1,23 +1,28 @@
 import { useState, useEffect } from 'react';
-import { 
-  DatabaseConnection,
-  initDatabase,
-  DatabaseInstance
-} from '../database';
-import { DatabaseConfig } from '../types/database';
+import { DatabaseManager } from '../database';
+import type { DatabaseConfig, DatabaseError } from '../types/database';
+
+// Garantir que temos uma instância válida do DatabaseManager
+const dbManager = DatabaseManager.getInstance();
+if (!dbManager) {
+  throw new Error('Falha ao inicializar o DatabaseManager');
+}
+
+// Asserção de tipo não-nulo após a verificação
+const databaseManager: NonNullable<DatabaseManager> = dbManager;
 
 export interface DatabaseHookResult {
   loading: boolean;
-  error: Error | null;
+  error: DatabaseError | null;
   initialized: boolean;
-  database: DatabaseInstance | null;
+  database: DatabaseManager | null;
 }
 
 export function useDatabase(config?: DatabaseConfig): DatabaseHookResult {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<DatabaseError | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const [database, setDatabase] = useState<DatabaseInstance | null>(null);
+  const [database, setDatabase] = useState<DatabaseManager | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -30,14 +35,14 @@ export function useDatabase(config?: DatabaseConfig): DatabaseHookResult {
         setLoading(true);
         setError(null);
 
-        // Inicializar banco de dados
-        const db = await DatabaseConnection.initialize(config);
-        await initDatabase(db);
+        // Usar a instância garantidamente não-nula
+        await databaseManager.initialize();
         
-        setDatabase(db);
+        setDatabase(databaseManager);
         setInitialized(true);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error(String(err)));
+        const dbError: DatabaseError = err instanceof Error ? err : new Error(String(err));
+        setError(dbError);
       } finally {
         setLoading(false);
       }

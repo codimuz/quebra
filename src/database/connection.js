@@ -1,28 +1,19 @@
 /**
- * SQLite Database Connection usando react-native-sqlite-storage
- * Configuração corrigida para React Native Bare Workflow
+ * SQLite Database Connection usando expo-sqlite
  */
 
-import SQLite from 'react-native-sqlite-storage';
-
-// Configurações globais do SQLite
-SQLite.DEBUG(true);
-SQLite.enablePromise(true);
+import * as SQLite from 'expo-sqlite';
 
 const DATABASE_NAME = 'invent.db';
 
 /**
  * Abrir conexão com o banco SQLite
- * Usando createFromLocation: 1 para criar o banco se não existir
  */
 export const openDatabase = async () => {
   try {
     console.log('SQLITE: Tentando abrir banco de dados...');
     
-    const db = await SQLite.openDatabase({
-      name: DATABASE_NAME,
-      location: 'default'
-    });
+    const db = SQLite.openDatabase(DATABASE_NAME);
     
     if (!db) {
       throw new Error('Database object é null');
@@ -38,20 +29,20 @@ export const openDatabase = async () => {
 };
 
 /**
- * Habilitar debug do SQLite
+ * Habilitar debug do SQLite (não disponível no expo-sqlite, mantido para compatibilidade)
  */
 export const enableDebug = () => {
-  SQLite.DEBUG(true);
-  console.log('SQLITE: Debug habilitado');
+  console.log('SQLITE: Debug não disponível no expo-sqlite');
 };
 
 /**
  * Fechar conexão com o banco
+ * Nota: expo-sqlite gerencia automaticamente a conexão
  */
 export const closeDatabase = async (db) => {
   try {
-    if (db && typeof db.close === 'function') {
-      await db.close();
+    if (db && typeof db.closeAsync === 'function') {
+      await db.closeAsync();
       console.log('SQLITE: Conexão fechada com sucesso');
     }
   } catch (error) {
@@ -63,7 +54,7 @@ export const closeDatabase = async (db) => {
  * Verificar se o banco está disponível
  */
 export const isDatabaseReady = (db) => {
-  return db !== null && db !== undefined && typeof db.executeSql === 'function';
+  return db !== null && db !== undefined && typeof db.transaction === 'function';
 };
 
 /**
@@ -76,9 +67,17 @@ export const executeSqlSafe = async (db, sql, params = []) => {
     }
     
     console.log('SQLITE: Executando SQL:', sql.substring(0, 100) + '...');
-    const result = await db.executeSql(sql, params);
-    console.log('SQLITE: SQL executado com sucesso');
-    return result;
+    
+    return new Promise((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          sql, 
+          params,
+          (_, result) => resolve([result]),
+          (_, error) => reject(error)
+        );
+      });
+    });
     
   } catch (error) {
     console.error('SQLITE: Erro ao executar SQL:', error.message);

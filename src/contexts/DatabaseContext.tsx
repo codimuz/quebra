@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useDatabase, DatabaseHookResult } from '../hooks/useDatabase';
-import { DatabaseConfig } from '../services/database';
+import { DatabaseConfig } from '../types/database';
 
 // Contexto
 const DatabaseContext = createContext<DatabaseHookResult | null>(null);
@@ -24,8 +24,7 @@ export function DatabaseProvider({ children, config }: DatabaseProviderProps) {
       loading: databaseHook.loading,
       error: databaseHook.error,
       initialized: databaseHook.initialized,
-      hasDatabase: !!databaseHook.database,
-      hasMigrations: !!databaseHook.migrations
+      hasDatabase: !!databaseHook.database
     });
 
     return (
@@ -59,8 +58,7 @@ export function useDataBaseContext(): DatabaseHookResult {
     loading: context.loading,
     error: context.error,
     initialized: context.initialized,
-    hasDatabase: !!context.database,
-    hasMigrations: !!context.migrations
+    hasDatabase: !!context.database
   });
 
   if (context.database) {
@@ -103,5 +101,5 @@ export function withDatabase<P extends object>(
 }
 
 // Re-exportar tipos importantes
-export type { DatabaseConfig } from '../services/database';
+export type { DatabaseConfig } from '../types/database';
 export type { DatabaseHookResult } from '../hooks/useDatabase';
