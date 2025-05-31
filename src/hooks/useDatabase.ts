@@ -1,25 +1,23 @@
 import { useState, useEffect } from 'react';
 import { 
-  DatabaseService,
-  DatabaseServices,
-  DatabaseConfig, 
-  MigrationService,
-  initializeDatabase 
-} from '../services/database';
+  DatabaseConnection,
+  initDatabase,
+  DatabaseInstance
+} from '../database';
+import { DatabaseConfig } from '../types/database';
 
 export interface DatabaseHookResult {
   loading: boolean;
   error: Error | null;
   initialized: boolean;
-  database: DatabaseService | null;
-  migrations: MigrationService | null;
+  database: DatabaseInstance | null;
 }
 
 export function useDatabase(config?: DatabaseConfig): DatabaseHookResult {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const [services, setServices] = useState<DatabaseServices | null>(null);
+  const [database, setDatabase] = useState<DatabaseInstance | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -33,15 +31,10 @@ export function useDatabase(config?: DatabaseConfig): DatabaseHookResult {
         setError(null);
 
         // Inicializar banco de dados
-        const database = await initializeDatabase(config);
+        const db = await DatabaseConnection.initialize(config);
+        await initDatabase(db);
         
-        // Criar serviços
-        const dbServices: DatabaseServices = {
-          database,
-          migrations: new MigrationService(database)
-        };
-
-        setServices(dbServices);
+        setDatabase(db);
         setInitialized(true);
       } catch (err) {
         setError(err instanceof Error ? err : new Error(String(err)));
@@ -54,8 +47,8 @@ export function useDatabase(config?: DatabaseConfig): DatabaseHookResult {
 
     // Cleanup ao desmontar
     return () => {
-      if (services?.database) {
-        services.database.close().catch(console.error);
+      if (database) {
+        database.close().catch(console.error);
       }
     };
   }, [config]);
@@ -64,7 +57,6 @@ export function useDatabase(config?: DatabaseConfig): DatabaseHookResult {
     loading,
     error,
     initialized,
-    database: services?.database || null,
-    migrations: services?.migrations || null
+    database
   };
 }
